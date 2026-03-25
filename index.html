@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Streaks</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+
+    <header class="app-header">
+      <div class="header-left">
+        <h1 class="app-title">today</h1>
+        <p class="date-label" id="dateLabel"></p>
+      </div>
+      <button class="btn-edit" id="btnEdit" aria-label="Edit habits">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </button>
+    </header>
+
+    <main class="habit-list" id="habitList"></main>
+
+    <!-- Edit panel -->
+    <div class="edit-panel" id="editPanel" hidden>
+      <div class="edit-header">
+        <h2 class="edit-title">Edit Habits</h2>
+        <button class="btn-done" id="btnDone">Done</button>
+      </div>
+      <ul class="edit-list" id="editList"></ul>
+      <div class="add-habit-row">
+        <input
+          type="text"
+          class="add-input"
+          id="addInput"
+          placeholder="New habit…"
+          maxlength="30"
+          autocomplete="off"
+          spellcheck="false"
+        >
+        <button class="btn-add" id="btnAdd">Add</button>
+      </div>
+    </div>
+
+  </div>
+
+  <canvas id="confettiCanvas"></canvas>
+  <script src="app.js"></script>
+</body>
+</html>

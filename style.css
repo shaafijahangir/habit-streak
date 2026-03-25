@@ -1,0 +1,458 @@
+/* ─── Custom properties ─────────────────────────────────────────────────── */
+:root {
+  --bg:           #0F0F13;
+  --surface:      #1A1A24;
+  --pill-rest:    #22222F;
+  --border:       #2E2E3E;
+  --accent:       #7C5CFC;
+  --accent-glow:  rgba(124, 92, 252, 0.35);
+  --streak:       #FF6B35;
+  --text:         #F0F0F6;
+  --text-muted:   #7A7A9A;
+  --radius-pill:  999px;
+  --pill-h:       72px;
+  --gap:          12px;
+  --max-w:        480px;
+}
+
+/* ─── Reset ─────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ─── App shell ──────────────────────────────────────────────────────────── */
+.app-shell {
+  min-height: 100dvh;
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 16px 40px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop elevation */
+@media (min-width: 640px) {
+  body { padding: 32px 0; background: #09090D; }
+  .app-shell {
+    min-height: calc(100dvh - 64px);
+    border-radius: 24px;
+    background: var(--bg);
+    box-shadow: 0 0 80px rgba(0,0,0,0.7), 0 0 0 1px var(--border);
+    padding-bottom: 48px;
+  }
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 0 8px;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.app-header.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+
+.app-title {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  color: var(--text);
+}
+
+.date-label {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  font-weight: 500;
+}
+
+.btn-edit {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-edit:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+/* ─── Habit list ─────────────────────────────────────────────────────────── */
+.habit-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  margin-top: 16px;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.habit-list.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(8px);
+}
+
+/* ─── Habit pill ─────────────────────────────────────────────────────────── */
+.habit-pill {
+  position: relative;
+  width: 100%;
+  height: var(--pill-h);
+  border-radius: var(--radius-pill);
+  border: none;
+  background: var(--pill-rest);
+  cursor: pointer;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 0 22px;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, box-shadow 0.4s ease;
+}
+
+.habit-pill:active:not(.completed) {
+  transform: scale(0.98);
+}
+
+.habit-pill.completed {
+  cursor: default;
+  box-shadow: 0 0 28px var(--accent-glow);
+}
+
+/* Fill layer — two halves */
+.pill-fill {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.pill-fill::before,
+.pill-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: var(--accent);
+  transform: scaleX(0);
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pill-fill::before {
+  left: 0;
+  transform-origin: left center;
+}
+
+.pill-fill::after {
+  right: 0;
+  transform-origin: right center;
+}
+
+.habit-pill.completing .pill-fill::before,
+.habit-pill.completing .pill-fill::after,
+.habit-pill.completed  .pill-fill::before,
+.habit-pill.completed  .pill-fill::after {
+  transform: scaleX(1);
+}
+
+/* Content layer (sits above fill) */
+.pill-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.habit-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.habit-name {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.3s ease;
+}
+
+.habit-streak {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--streak);
+  flex-shrink: 0;
+  transition: opacity 0.3s ease;
+}
+
+.habit-pill.completed .habit-streak {
+  opacity: 0;
+}
+
+/* Checkmark */
+.pill-check {
+  position: absolute;
+  right: 22px;
+  z-index: 2;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0) rotate(-15deg);
+  transition: opacity 0.25s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  pointer-events: none;
+}
+
+.pill-check svg {
+  stroke: #fff;
+}
+
+.habit-pill.completed .pill-check {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* New-day reset subtle ring */
+.habit-pill.fresh {
+  animation: pulseRing 0.6s ease-out;
+}
+
+@keyframes pulseRing {
+  0%   { box-shadow: 0 0 0 0 var(--accent-glow); }
+  70%  { box-shadow: 0 0 0 10px transparent; }
+  100% { box-shadow: none; }
+}
+
+/* ─── Edit panel ─────────────────────────────────────────────────────────── */
+.edit-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  animation: slideUp 0.25s ease;
+}
+
+.edit-panel[hidden] { display: none; }
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 0 4px;
+}
+
+.edit-title {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+}
+
+.btn-done {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.btn-done:hover { opacity: 0.85; }
+
+/* Edit list */
+.edit-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 14px 16px;
+  transition: opacity 0.2s, transform 0.2s;
+  cursor: grab;
+  touch-action: none;
+}
+
+.edit-item.dragging {
+  opacity: 0.4;
+  cursor: grabbing;
+}
+
+.edit-item.drag-over {
+  border-color: var(--accent);
+  background: rgba(124, 92, 252, 0.08);
+}
+
+.drag-handle {
+  color: var(--text-muted);
+  font-size: 18px;
+  cursor: grab;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.edit-item-icon { font-size: 20px; flex-shrink: 0; }
+
+.edit-item-name {
+  flex: 1;
+  font-size: 16px;
+  font-weight: 500;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-delete {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s, color 0.15s;
+}
+
+.btn-delete:hover {
+  background: #FF4A4A22;
+  color: #FF6B6B;
+  border-color: #FF4A4A44;
+}
+
+/* Add habit row */
+.add-habit-row {
+  display: flex;
+  gap: 10px;
+}
+
+.add-input {
+  flex: 1;
+  height: 48px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 15px;
+  padding: 0 16px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.add-input::placeholder { color: var(--text-muted); }
+
+.add-input:focus { border-color: var(--accent); }
+
+.btn-add {
+  height: 48px;
+  padding: 0 20px;
+  border-radius: 14px;
+  border: none;
+  background: var(--accent);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.btn-add:hover { opacity: 0.85; }
+
+/* ─── Confetti canvas ────────────────────────────────────────────────────── */
+#confettiCanvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  width: 100%;
+  height: 100%;
+}
+
+/* ─── Empty state ────────────────────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 15px;
+  margin-top: 48px;
+  line-height: 1.6;
+}
+
+/* ─── All done banner ────────────────────────────────────────────────────── */
+.all-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 28px;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease 0.3s, transform 0.4s ease 0.3s;
+}
+
+.all-done.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.all-done-emoji { font-size: 36px; }
+.all-done-text {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+.all-done-sub {
+  font-size: 14px;
+  color: var(--text-muted);
+}
