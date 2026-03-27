@@ -66,9 +66,7 @@ button, input {
 }
 
 .app-header.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-8px);
+  display: none;
 }
 
 .app-title {
@@ -129,9 +127,7 @@ button, input {
 }
 
 .habit-list.hidden {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(8px);
+  display: none;
 }
 
 /* ─── Habit pill ─────────────────────────────────────────────────────────── */
