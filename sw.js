@@ -1,4 +1,4 @@
-const CACHE_NAME = 'streaks-v7';
+const CACHE_NAME = 'streaks-v8';
 const STATIC_ASSETS = [
   './manifest.json',
   './icon-192.png',

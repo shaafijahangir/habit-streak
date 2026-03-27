@@ -181,10 +181,10 @@ button, input {
 
 /* ─── Fill layer — waterflowy radial expansion ───────────────────────────── */
 
-/* Register animatable custom property for smooth gradient interpolation */
-@property --fill-pct {
+/* Register animatable custom property for clip-path sweep */
+@property --clip-right {
   syntax: '<percentage>';
-  initial-value: 0%;
+  initial-value: 100%;
   inherits: false;
 }
 
@@ -192,18 +192,15 @@ button, input {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  --fill-pct: 0%;
-  background: radial-gradient(
-    ellipse 120% 160% at 50% 50%,
-    var(--done) var(--fill-pct),
-    transparent var(--fill-pct)
-  );
-  transition: --fill-pct 0.75s cubic-bezier(0.22, 1.4, 0.36, 1);
+  background: var(--done);
+  --clip-right: 100%;
+  clip-path: inset(0 var(--clip-right) 0 0 round 999px);
+  transition: --clip-right 0.7s cubic-bezier(0.85, 0, 0.15, 1);
 }
 
 .habit-pill.completing .pill-fill,
 .habit-pill.completed  .pill-fill {
-  --fill-pct: 100%;
+  --clip-right: 0%;
 }
 
 /* Shimmer sweep after fill completes */

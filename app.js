@@ -275,7 +275,6 @@ function handlePillClick(pillEl, id) {
     completeHabit(id);
     pillEl.classList.remove('active', 'completing', 'animating');
     pillEl.classList.add('completed');
-    pillEl.style.removeProperty('--fill-pct');
 
     // Update streak number without full re-render
     const habit = state.habits.find(h => h.id === id);
