@@ -13,6 +13,7 @@ const STORAGE_KEY = 'streaks_v1';
 
 let state = {
   habits: [],
+  activeToday: [],     // "doing it now" — blue state
   completedToday: [],
   lastCheckedDate: null,
   history: {},  // { "2026-03-27": ["gym-001", "code-001"], ... }
@@ -46,20 +47,23 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       state = JSON.parse(raw);
-      // Migrate: ensure history exists
+      // Migrate: ensure history and activeToday exist
       if (!state.history) state.history = {};
+      if (!state.activeToday) state.activeToday = [];
     } else {
       state.habits = DEFAULT_HABITS.map(h => ({
         ...h,
         streak: 0,
         lastCompleted: null,
       }));
+      state.activeToday = [];
       state.completedToday = [];
       state.lastCheckedDate = getToday();
       state.history = {};
     }
   } catch (_) {
     state.habits = DEFAULT_HABITS.map(h => ({ ...h, streak: 0, lastCompleted: null }));
+    state.activeToday = [];
     state.completedToday = [];
     state.lastCheckedDate = getToday();
     state.history = {};
@@ -91,12 +95,19 @@ function resetIfNewDay() {
       h.streak = 0;
     }
   });
+  state.activeToday = [];
   state.completedToday = [];
   state.lastCheckedDate = today;
   save();
 }
 
 /* ─── HABIT LOGIC ────────────────────────────────────────────────────────── */
+
+function activateHabit(id) {
+  if (state.activeToday.includes(id) || state.completedToday.includes(id)) return;
+  state.activeToday.push(id);
+  save();
+}
 
 function completeHabit(id) {
   if (state.completedToday.includes(id)) return;
@@ -134,9 +145,10 @@ function renderHabits() {
 
   state.habits.forEach(habit => {
     const done = state.completedToday.includes(habit.id);
+    const active = state.activeToday.includes(habit.id);
 
     const pill = document.createElement('button');
-    pill.className = 'habit-pill' + (done ? ' completed' : '');
+    pill.className = 'habit-pill' + (done ? ' completed' : '') + (active && !done ? ' active' : '');
     pill.dataset.id = habit.id;
     pill.setAttribute('aria-label', `${habit.name}, streak ${habit.streak}`);
 
@@ -204,14 +216,23 @@ function escHtml(str) {
 
 /* ─── ANIMATION ──────────────────────────────────────────────────────────── */
 
-function animatePill(pillEl, id) {
+function handlePillClick(pillEl, id) {
   if (pillEl.classList.contains('animating') || pillEl.classList.contains('completed')) return;
+
+  // First click → activate (blue)
+  if (!state.activeToday.includes(id)) {
+    activateHabit(id);
+    pillEl.classList.add('active');
+    return;
+  }
+
+  // Second click → complete
   pillEl.classList.add('animating', 'completing');
 
   setTimeout(() => {
     completeHabit(id);
+    pillEl.classList.remove('active', 'completing');
     pillEl.classList.add('completed');
-    pillEl.classList.remove('completing');
 
     // Update streak number without full re-render
     const habit = state.habits.find(h => h.id === id);
@@ -568,7 +589,7 @@ document.addEventListener('DOMContentLoaded', () => {
   habitListEl.addEventListener('click', e => {
     const pill = e.target.closest('.habit-pill');
     if (!pill || pill.classList.contains('completed') || pill.classList.contains('animating')) return;
-    animatePill(pill, pill.dataset.id);
+    handlePillClick(pill, pill.dataset.id);
   });
 
   btnEdit.addEventListener('click', openEditMode);
