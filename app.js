@@ -273,7 +273,7 @@ function handlePillClick(pillEl, id) {
 
   setTimeout(() => {
     completeHabit(id);
-    pillEl.classList.remove('active', 'completing');
+    pillEl.classList.remove('active', 'completing', 'animating');
     pillEl.classList.add('completed');
 
     // Update streak number without full re-render
