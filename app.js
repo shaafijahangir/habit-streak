@@ -15,6 +15,7 @@ let state = {
   habits: [],
   completedToday: [],
   lastCheckedDate: null,
+  history: {},  // { "2026-03-27": ["gym-001", "code-001"], ... }
 };
 
 /* ─── DATE UTILS ─────────────────────────────────────────────────────────── */
@@ -34,6 +35,10 @@ function formatDateLabel() {
   return new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
 }
 
+function formatDateStr(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
 /* ─── STORAGE ────────────────────────────────────────────────────────────── */
 
 function load() {
@@ -41,6 +46,8 @@ function load() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       state = JSON.parse(raw);
+      // Migrate: ensure history exists
+      if (!state.history) state.history = {};
     } else {
       state.habits = DEFAULT_HABITS.map(h => ({
         ...h,
@@ -49,11 +56,22 @@ function load() {
       }));
       state.completedToday = [];
       state.lastCheckedDate = getToday();
+      state.history = {};
     }
   } catch (_) {
     state.habits = DEFAULT_HABITS.map(h => ({ ...h, streak: 0, lastCompleted: null }));
     state.completedToday = [];
     state.lastCheckedDate = getToday();
+    state.history = {};
+  }
+
+  // Backfill today's history from completedToday
+  const today = getToday();
+  if (state.completedToday.length > 0) {
+    if (!state.history[today]) state.history[today] = [];
+    state.completedToday.forEach(id => {
+      if (!state.history[today].includes(id)) state.history[today].push(id);
+    });
   }
 }
 
@@ -87,6 +105,12 @@ function completeHabit(id) {
   habit.streak += 1;
   habit.lastCompleted = getToday();
   state.completedToday.push(id);
+
+  // Track in history
+  const today = getToday();
+  if (!state.history[today]) state.history[today] = [];
+  if (!state.history[today].includes(id)) state.history[today].push(id);
+
   save();
 }
 
@@ -266,6 +290,157 @@ function loop() {
   }
 }
 
+/* ─── CALENDAR ──────────────────────────────────────────────────────────── */
+
+const calendarPanel = document.getElementById('calendarPanel');
+const calGrid       = document.getElementById('calGrid');
+const calMonthLabel = document.getElementById('calMonthLabel');
+const calStreaks     = document.getElementById('calStreaks');
+const btnCalendar   = document.getElementById('btnCalendar');
+const btnPrevMonth  = document.getElementById('btnPrevMonth');
+const btnNextMonth  = document.getElementById('btnNextMonth');
+
+let calYear, calMonth; // 0-indexed month
+
+function openCalendar() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+
+  appHeader.classList.add('hidden');
+  habitListEl.classList.add('hidden');
+  editPanel.setAttribute('hidden', '');
+  calendarPanel.removeAttribute('hidden');
+  btnCalendar.classList.add('active');
+
+  renderCalendar();
+}
+
+function closeCalendar() {
+  calendarPanel.setAttribute('hidden', '');
+  appHeader.classList.remove('hidden');
+  habitListEl.classList.remove('hidden');
+  btnCalendar.classList.remove('active');
+  renderHabits();
+}
+
+function toggleCalendar() {
+  if (calendarPanel.hasAttribute('hidden')) {
+    openCalendar();
+  } else {
+    closeCalendar();
+  }
+}
+
+function renderCalendar() {
+  const now = new Date();
+  const todayY = now.getFullYear();
+  const todayM = now.getMonth();
+  const todayD = now.getDate();
+  const todayStr = getToday();
+
+  // Month label
+  const monthName = new Date(calYear, calMonth).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  calMonthLabel.textContent = monthName;
+
+  // Disable next if current month
+  btnNextMonth.disabled = (calYear === todayY && calMonth === todayM);
+
+  // Build grid
+  calGrid.innerHTML = '';
+
+  // Day-of-week headers
+  const dows = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  dows.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'calendar-dow';
+    el.textContent = d;
+    calGrid.appendChild(el);
+  });
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const habitCount = state.habits.length;
+
+  let completedDays = 0;
+  let totalCompletions = 0;
+
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div');
+    el.className = 'calendar-day empty';
+    calGrid.appendChild(el);
+  }
+
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const dateStr = formatDateStr(calYear, calMonth, d);
+    const completions = state.history[dateStr] || [];
+    const count = completions.length;
+    const isFuture = (calYear > todayY) ||
+                     (calYear === todayY && calMonth > todayM) ||
+                     (calYear === todayY && calMonth === todayM && d > todayD);
+    const isToday = dateStr === todayStr;
+    const allDone = habitCount > 0 && count >= habitCount;
+
+    const el = document.createElement('div');
+    el.className = 'calendar-day';
+    if (isToday) el.classList.add('today');
+    if (isFuture) el.classList.add('future');
+    if (count > 0 && !isFuture) el.classList.add('has-completions');
+    if (allDone && !isFuture) el.classList.add('all-completed');
+
+    // Day number
+    const numEl = document.createElement('span');
+    numEl.textContent = d;
+    el.appendChild(numEl);
+
+    // Dots for partial completions (skip if all done — already highlighted)
+    if (count > 0 && !allDone && !isFuture) {
+      const dotsEl = document.createElement('div');
+      dotsEl.className = 'calendar-dots';
+      const dotsToShow = Math.min(count, 4);
+      for (let i = 0; i < dotsToShow; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'calendar-dot';
+        dotsEl.appendChild(dot);
+      }
+      el.appendChild(dotsEl);
+    }
+
+    if (!isFuture && count > 0) {
+      totalCompletions += count;
+      if (allDone) completedDays++;
+    }
+
+    calGrid.appendChild(el);
+  }
+
+  // Streak summary
+  calStreaks.innerHTML = '';
+
+  if (state.habits.length > 0) {
+    // Month stats
+    const statsEl = document.createElement('div');
+    statsEl.className = 'calendar-month-stats';
+    const pastDays = (calYear === todayY && calMonth === todayM) ? todayD : daysInMonth;
+    statsEl.textContent = `${completedDays} perfect day${completedDays !== 1 ? 's' : ''} · ${totalCompletions} total check-in${totalCompletions !== 1 ? 's' : ''} this month`;
+    calStreaks.appendChild(statsEl);
+
+    // Per-habit streaks
+    state.habits.forEach(habit => {
+      const row = document.createElement('div');
+      row.className = 'calendar-streak-row';
+      row.innerHTML = `
+        <span class="calendar-streak-icon">${habit.icon}</span>
+        <span class="calendar-streak-name">${escHtml(habit.name)}</span>
+        <span class="calendar-streak-badge">🔥 ${habit.streak}</span>
+      `;
+      calStreaks.appendChild(row);
+    });
+  }
+}
+
 /* ─── EDIT MODE ──────────────────────────────────────────────────────────── */
 
 const editPanel  = document.getElementById('editPanel');
@@ -276,6 +451,10 @@ const addInput   = document.getElementById('addInput');
 const btnAdd     = document.getElementById('btnAdd');
 
 function openEditMode() {
+  // Close calendar if open
+  calendarPanel.setAttribute('hidden', '');
+  btnCalendar.classList.remove('active');
+
   appHeader.classList.add('hidden');
   habitListEl.classList.add('hidden');
   editPanel.removeAttribute('hidden');
@@ -393,5 +572,20 @@ document.addEventListener('DOMContentLoaded', () => {
   btnAdd.addEventListener('click', addHabit);
   addInput.addEventListener('keydown', e => {
     if (e.key === 'Enter') addHabit();
+  });
+
+  // Calendar
+  btnCalendar.addEventListener('click', toggleCalendar);
+  btnPrevMonth.addEventListener('click', () => {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+    renderCalendar();
+  });
+  btnNextMonth.addEventListener('click', () => {
+    const now = new Date();
+    if (calYear === now.getFullYear() && calMonth === now.getMonth()) return;
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+    renderCalendar();
   });
 });
