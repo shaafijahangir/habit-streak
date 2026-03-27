@@ -6,6 +6,8 @@
   --border:       #2E2E3E;
   --accent:       #7C5CFC;
   --accent-glow:  rgba(124, 92, 252, 0.35);
+  --done:         #22c55e;
+  --done-glow:    rgba(34, 197, 94, 0.35);
   --streak:       #FF6B35;
   --text:         #F0F0F6;
   --text-muted:   #7A7A9A;
@@ -83,6 +85,16 @@ button, input {
   font-weight: 500;
 }
 
+.progress-counter {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.progress-counter .progress-done {
+  color: var(--done);
+}
+
 .header-actions {
   display: flex;
   align-items: center;
@@ -157,8 +169,8 @@ button, input {
 }
 
 .habit-pill.completed {
-  cursor: default;
-  box-shadow: 0 0 28px var(--accent-glow);
+  cursor: pointer;
+  box-shadow: 0 0 28px var(--done-glow);
 }
 
 /* Fill layer — two halves */
@@ -175,7 +187,7 @@ button, input {
   top: 0;
   width: 50%;
   height: 100%;
-  background: var(--accent);
+  background: var(--done);
   transform: scaleX(0);
   transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
 }

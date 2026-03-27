@@ -125,15 +125,43 @@ function completeHabit(id) {
   save();
 }
 
+function undoHabit(id) {
+  const habit = state.habits.find(h => h.id === id);
+  if (!habit) return;
+  habit.streak = Math.max(0, habit.streak - 1);
+  habit.lastCompleted = null;
+  state.completedToday = state.completedToday.filter(cid => cid !== id);
+  state.activeToday = state.activeToday.filter(cid => cid !== id);
+
+  // Remove from today's history
+  const today = getToday();
+  if (state.history[today]) {
+    state.history[today] = state.history[today].filter(cid => cid !== id);
+  }
+
+  save();
+}
+
 function generateId(name) {
   return name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '') + '-' + Date.now();
 }
 
 /* ─── RENDER ─────────────────────────────────────────────────────────────── */
 
-const habitListEl = document.getElementById('habitList');
-const editListEl  = document.getElementById('editList');
-const dateLabel   = document.getElementById('dateLabel');
+const habitListEl      = document.getElementById('habitList');
+const editListEl       = document.getElementById('editList');
+const dateLabel        = document.getElementById('dateLabel');
+const progressCounter  = document.getElementById('progressCounter');
+
+function updateProgress() {
+  const total = state.habits.length;
+  const done = state.completedToday.length;
+  if (total === 0) {
+    progressCounter.innerHTML = '';
+  } else {
+    progressCounter.innerHTML = `<span class="progress-done">${done}</span> / ${total} completed`;
+  }
+}
 
 function renderHabits() {
   habitListEl.innerHTML = '';
@@ -170,6 +198,7 @@ function renderHabits() {
   });
 
   checkAllDone();
+  updateProgress();
 }
 
 function checkAllDone() {
@@ -217,7 +246,20 @@ function escHtml(str) {
 /* ─── ANIMATION ──────────────────────────────────────────────────────────── */
 
 function handlePillClick(pillEl, id) {
-  if (pillEl.classList.contains('animating') || pillEl.classList.contains('completed')) return;
+  if (pillEl.classList.contains('animating')) return;
+
+  // Third click (undo) → completed pill back to inactive
+  if (pillEl.classList.contains('completed')) {
+    undoHabit(id);
+    pillEl.classList.remove('completed');
+    // Update streak number
+    const habit = state.habits.find(h => h.id === id);
+    const numEl = pillEl.querySelector('.streak-num');
+    if (numEl && habit) numEl.textContent = habit.streak;
+    checkAllDone();
+    updateProgress();
+    return;
+  }
 
   // First click → activate (blue)
   if (!state.activeToday.includes(id)) {
@@ -244,6 +286,7 @@ function handlePillClick(pillEl, id) {
     confettiBurst(rect.left + rect.width / 2, rect.top + rect.height / 2);
 
     checkAllDone();
+    updateProgress();
   }, 380);
 }
 
@@ -588,7 +631,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Delegated click on habit list
   habitListEl.addEventListener('click', e => {
     const pill = e.target.closest('.habit-pill');
-    if (!pill || pill.classList.contains('completed') || pill.classList.contains('animating')) return;
+    if (!pill || pill.classList.contains('animating')) return;
     handlePillClick(pill, pill.dataset.id);
   });
 
