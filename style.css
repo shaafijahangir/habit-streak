@@ -24,6 +24,14 @@ html, body {
   font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+button, input {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 /* ─── App shell ──────────────────────────────────────────────────────────── */
