@@ -299,6 +299,7 @@ const calStreaks     = document.getElementById('calStreaks');
 const btnCalendar   = document.getElementById('btnCalendar');
 const btnPrevMonth  = document.getElementById('btnPrevMonth');
 const btnNextMonth  = document.getElementById('btnNextMonth');
+const btnCloseCalendar = document.getElementById('btnCloseCalendar');
 
 let calYear, calMonth; // 0-indexed month
 
@@ -580,6 +581,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Calendar
   btnCalendar.addEventListener('click', toggleCalendar);
+  btnCloseCalendar.addEventListener('click', closeCalendar);
   btnPrevMonth.addEventListener('click', () => {
     calMonth--;
     if (calMonth < 0) { calMonth = 11; calYear--; }
