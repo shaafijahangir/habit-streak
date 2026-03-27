@@ -313,6 +313,7 @@ function openCalendar() {
   calendarPanel.removeAttribute('hidden');
   btnCalendar.classList.add('active');
 
+  window.scrollTo(0, 0);
   renderCalendar();
 }
 
@@ -321,6 +322,7 @@ function closeCalendar() {
   appHeader.classList.remove('hidden');
   habitListEl.classList.remove('hidden');
   btnCalendar.classList.remove('active');
+  window.scrollTo(0, 0);
   renderHabits();
 }
 
@@ -458,6 +460,7 @@ function openEditMode() {
   appHeader.classList.add('hidden');
   habitListEl.classList.add('hidden');
   editPanel.removeAttribute('hidden');
+  window.scrollTo(0, 0);
   renderEditList();
 }
 
@@ -465,6 +468,7 @@ function closeEditMode() {
   editPanel.setAttribute('hidden', '');
   appHeader.classList.remove('hidden');
   habitListEl.classList.remove('hidden');
+  window.scrollTo(0, 0);
   renderHabits();
 }
 
